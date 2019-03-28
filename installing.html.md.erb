@@ -43,3 +43,119 @@ To configure the Observability Data Store for PCF tile, perform the following st
     1. Optional: Enable or disable the **Smoke Tests** errand. This errand verifies that the tile is functioning correctly, and ideally should not be disabled.
 
 1. Return to the Ops Manager Installation Dashboard and click **Apply Changes**.
+
+### <a id='observability-data-store-tile'></a> (Optional) Backing Up Observability Data Store for PCF
+
+Observability Data Store for PCF supports (Bosh Backup and Restore)[https://docs.pivotal.io/pivotalcf/2-4/customizing/backup-restore/index.html] functionality.
+We recommend running nightly backup via a Concourse pipeline job like the one below:
+
+```yaml
+---
+resource_types:
+  - name: gcs-resource
+    type: docker-image
+    source:
+      repository: frodenas/gcs-resource
+
+  - name: pivnet
+    type: docker-image
+    source:
+      repository: pivotalcf/pivnet-resource
+      tag: latest-final
+
+resources:
+  - name: bbr-release
+    type: pivnet
+    source:
+      api_token: ((pivnet-refresh-token))
+      product_slug: p-bosh-backup-and-restore
+
+  - name: bbr-pipeline-tasks-repo
+    type: git
+    source:
+      uri: https://github.com/pivotal-cf/bbr-pcf-pipeline-tasks.git
+      branch: master
+      tag_filter: v1.0.0
+
+  - name: bbr-docker
+    type: docker-image
+    source:
+      repository: cloudfoundrylondon/bbr-pipeline
+      tag: final
+
+  - name: nightly
+    type: time
+    source:
+      interval: 24h
+      start: 22:00
+      stop: 00:00
+      location: America/Denver
+
+  - name: ods-backup-bucket
+    type: gcs-resource
+    source:
+      bucket: ((gcs-bucket-name))
+      json_key: ((service-account-json))
+      regexp: ((gcs-directory))/ods-backup-(.*).tar
+
+jobs:
+  - name: trigger-backup
+    plan:
+      - put: nightly
+
+  - name: nightly-backup
+    plan:
+      - aggregate:
+        - get: nightly
+          trigger: true
+        - get: bbr-docker
+        - get: bbr-release
+        - get: bbr-pipeline-tasks-repo
+      - task: extract-binary
+        file: bbr-pipeline-tasks-repo/tasks/extract-bbr-binary/task.yml
+      - task: run-backup
+        image: bbr-docker
+        config:
+          platform: linux
+
+          inputs:
+            - name: binary
+            - name: bbr-pipeline-tasks-repo
+
+          outputs:
+            - name: ods-backup-artifact
+
+          params:
+            OPSMAN_URL: ((opsman-url))
+            OPSMAN_USERNAME: ((opsman-user.username))
+            OPSMAN_PASSWORD: ((opsman-user.password))
+            OPSMAN_PRIVATE_KEY: ((ops-man-ssh-key.private_key))
+
+          run:
+            path: /bin/bash
+            args:
+              - -c
+              - |
+                #!/usr/bin/env bash
+
+                set -eu
+
+                scripts="${PWD}/bbr-pipeline-tasks-repo/scripts"
+
+                export CLIENT_ID=
+                # shellcheck disable=SC1090
+                source "${scripts}/export-director-metadata"
+
+                om_cmd curl -p /api/v0/deployed/products > deployed_products.json
+                DEPLOYMENT_NAME=$(jq -r '.[] | select(.type == "p-observability-data-store") | .guid' "deployed_products.json")
+                export DEPLOYMENT_NAME
+
+                pushd ods-backup-artifact
+                  ${scripts}/deployment-backup
+                  tar -cvf ods-backup-$(date +%Y.%m.%d.%H.%M.%S).tar -- *
+                popd
+
+      - put: ods-backup-bucket
+        params:
+          file: ods-backup-artifact/ods-backup-*.tar
+```
