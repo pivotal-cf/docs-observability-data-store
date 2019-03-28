@@ -159,3 +159,18 @@ jobs:
         params:
           file: ods-backup-artifact/ods-backup-*.tar
 ```
+
+### <a id='observability-data-store-tile'></a> (Optional) Restoring Observability Data Store for PCF from a BBR Backup
+If you are running nightly backups, you have the ability to restore the Prometheus data using Bosh Backup and Restore. 
+Keep in mind this will delete any existing data on that VM. To restore, run the following command:
+
+```
+bbr deployment \
+  --target BOSH_TARGET \
+  --username BOSH_CLIENT \
+  --password BOSH_PASSWORD \
+  --deployment OBSERVABILITY_DATA_STORE_DEPLOYMENT_NAME \
+  --ca-cert PATH_TO_BOSH_SERVER_CERTIFICATE \
+  restore \
+  --artifact-path PATH_TO_DEPLOYMENT_BACKUP
+```
