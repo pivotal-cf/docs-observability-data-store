@@ -47,7 +47,7 @@ To configure the Observability Data Store for PCF tile, perform the following st
 ### <a id='observability-data-store-tile'></a> (Optional) Backing Up Observability Data Store for PCF
 
 Observability Data Store for PCF supports (Bosh Backup and Restore)[https://docs.pivotal.io/pivotalcf/2-4/customizing/backup-restore/index.html] functionality.
-We recommend running nightly backup via a Concourse pipeline job like the one below:
+We recommend running nightly backups via a Concourse pipeline job like the one below:
 
 ```yaml
 ---
@@ -162,15 +162,19 @@ jobs:
 
 ### <a id='observability-data-store-tile'></a> (Optional) Restoring Observability Data Store for PCF from a BBR Backup
 If you are running nightly backups, you have the ability to restore the Prometheus data using Bosh Backup and Restore. 
-Keep in mind this will delete any existing data on that VM. To restore, run the following command:
+Be aware that this will delete any existing data on all Prometheus VMs and restore them to when the backup was taken.
+
+To restore, run the following commands:
 
 ```
+mkdir -p $PATH_TO_DEPLOYMENT_BACKUP
+tar xvf ods-backup-*.tar -C $PATH_TO_DEPLOYMENT_BACKUP
 bbr deployment \
-  --target BOSH_TARGET \
-  --username BOSH_CLIENT \
-  --password BOSH_PASSWORD \
-  --deployment OBSERVABILITY_DATA_STORE_DEPLOYMENT_NAME \
-  --ca-cert PATH_TO_BOSH_SERVER_CERTIFICATE \
+  --target $BOSH_TARGET \
+  --username $BOSH_CLIENT \
+  --password $BOSH_PASSWORD \
+  --deployment $OBSERVABILITY_DATA_STORE_DEPLOYMENT_NAME \
+  --ca-cert $PATH_TO_BOSH_SERVER_CERTIFICATE \
   restore \
-  --artifact-path PATH_TO_DEPLOYMENT_BACKUP
+  --artifact-path $PATH_TO_DEPLOYMENT_BACKUP
 ```
