@@ -3,4 +3,17 @@ title: Using Observability Data Store for PCF
 owner: Primus
 ---
 
-Coming soon.
+This topic describes how to use Observability Data Store for Pivotal Cloud Foundry (PCF).
+
+##<a id='grafana'></a>Accessing Grafana
+
+The Observability Data Store for PCF includes [Grafana](https://grafana.com/), a platform for exploring and visualizing metrics. To access it, navigate to `grafana.SYSTEM-DOMAIN`.  The username and password are located in the `Credentials` tab of the Observability Data Store for PCF tile with the name `Grafana Login`.
+
+##<a id='direct-metric-access'></a>Accessing Metrics Directly (PAS Platform Metrics Only)
+
+If desired, the metrics stored by Prometheus may be queried directly. If PAS is installed, then any Prometheus-compatible client may be used, with the target `https://primus.SYSTEM-DOMAIN` and an `Authentication` header containing a valid JWT token from UAA with the scope `logs.admin` or `doppler.firehose`.
+
+##<a id='direct-metric-access'></a>Accessing Metrics Directly (PAS Application Metrics Only)
+
+If desired, the metrics stored by Prometheus for applications within PAS may be queried directly.  Query the target `https://primus.SYSTEM-DOMAIN` and an `Authentication` header containing a valid JWT token from UAA for a
+user who has the `Space Developer` grant for the space in which the application resides.

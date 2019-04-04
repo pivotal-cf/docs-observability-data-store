@@ -1,6 +1,71 @@
 ---
-title: Observability Data Store for PCF
+title: Observability Data Store for PCF Resources
 owner: Primus
 ---
 
-Coming soon.
+This topic describes resource requirements for Observability Data Store for Pivotal Cloud Foundry (PCF).
+
+##<a id="requirements"></a>Observability Data Store for PCF Tile
+
+You can configure resources in the **Resource Config** section of the Observability Data Store for PCF tile. By default, Observability Data Store for PCF automatically selects the instance type that is best suited for each job.
+
+<p class="note"><strong>Note</strong>: The automatically selected values that you see in the <strong>Resource Config</strong> section of the Observability Data Store for PCF tile depend on the available resources for your PCF deployment.</p>
+
+The following table provides the default resource and IP requirements for installing the Observability Data Store for PCF tile.
+
+<table border="1" class="nice">
+  <thead>
+  <tr>
+    <th>Resource</th>
+    <th>Instances</th>
+    <th>CPU</th>
+    <th>RAM</th>
+    <th>Ephemeral Disk</th>
+    <th>Persistent Disk</th>
+    <th>Static IP</th>
+    <th>Dynamic IP</th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr>
+    <td>Telegraf RLP Exporter</td>
+    <td>1</td>
+    <td></td>
+    <td>&nbsp;GB</td>
+    <td>&nbsp;GB</td>
+    <td>&nbsp;GB</td>
+    <td>0</td>
+    <td>1</td>
+  </tr>
+  <tr>
+    <td>Primus Data</td>
+    <td>2</td>
+    <td></td>
+    <td>&nbsp;GB</td>
+    <td>&nbsp;GB</td>
+    <td>&nbsp;GB</td>
+    <td>0</td>
+    <td>1</td>
+  </tr>
+  <tr>
+    <td>Primus Query</td>
+    <td>2</td>
+    <td></td>
+    <td>&nbsp;GB</td>
+    <td>&nbsp;GB</td>
+    <td>&nbsp;GB</td>
+    <td>0</td>
+    <td>1</td>
+  </tr>
+  <tr>
+    <td>Grafana</td>
+    <td>1</td>
+    <td></td>
+    <td>&nbsp;GB</td>
+    <td>&nbsp;GB</td>
+    <td>&nbsp;GB</td>
+    <td>0</td>
+    <td>1</td>
+  </tr>
+  </tbody>
+</table>
