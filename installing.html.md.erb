@@ -36,12 +36,6 @@ To configure the Observability Data Store for PCF tile, perform the following st
     1. Optional: Modify the **Scrape Interval** as desired. This controls the frequency at which Prometheus scrapes its targets for metrics.
     1. Ensure that **Integrate with PAS** is set as appropriate. It should be enabled if PAS is *already* installed on the foundation.
 
-1. Navigate to **Telegraf Configuration** and do the following:
-    1. Optional: Modify the **Scrape Port** as desired. This controls the port on which Telegraf exposes metrics. It should only be changed if that port is already in use by other components on the VM.
-
-1. Navigate to **Errands** and do the following:
-    1. Optional: Enable or disable the **Smoke Tests** errand. This errand verifies that the tile is functioning correctly, and ideally should not be disabled.
-
 1. Return to the Ops Manager Installation Dashboard and click **Apply Changes**.
 
 ### <a id='observability-data-store-tile'></a> (Optional) Backing Up Observability Data Store for PCF
@@ -177,4 +171,27 @@ bbr deployment \
   --ca-cert $PATH_TO_BOSH_SERVER_CERTIFICATE \
   restore \
   --artifact-path $PATH_TO_DEPLOYMENT_BACKUP
+```
+
+##<a id='install'></a> (Optional) Install Telegraf for Firehose Metrics
+
+If Firehose metrics are desired then Telegraf can be installed on each foundation with Pivotal Application Service.
+We recommend CF pushing Telegraf using the binary provided on [PivNet](https://network.pivotal.io/products/observability_datastore_pcf).
+
+1. Download the Telegraf binary and associated `telegraf.conf`
+2. Edit the `telegraf.conf`.  Details for doing so can be found here: [Telegraf Documentation](https://docs.influxdata.com/telegraf/v1.10/administration/configuration/)
+3. Create certificates for connecting to the Reverse Log Proxy endpoint.
+  a. Get the Ops Manager CA Certificate and copy it to a file named `loggregator_ca.crt` using `om certificate-authorities`
+  b. Generate certificates to communicate with Reverse Log Proxy over mTLS using `om generate-certificate --domains reverse-log-proxy.service.cf.internal`
+4. CF Push Telegraf to the desired foundation
+  a. Place the telegraf binary, the `telegraf.conf` and the three certficates in a folder and navigate to that folder.
+  b. Target the foundation to be monitored and run `cf push telegraf -b binary_buildpack -c "./telegraf -config telegraf.conf"`
+5. Add a scrape config job to Observability Data Store for the new telegraf. Example:
+```
+- job_name: telegraf
+  metrics_path: /metrics
+  scheme: https
+  static_configs:
+  - targets:
+    - "telegraf.apps.<domain>"
 ```
