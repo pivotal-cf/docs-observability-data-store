@@ -34,9 +34,10 @@ To configure the Observability Data Store for PCF tile, perform the following st
 
 1. Navigate to **Prometheus Configuration** and do the following:
     1. Optional: Modify the **Scrape Interval** as desired. This controls the frequency at which Prometheus scrapes its targets for metrics.
-    1. Ensure that **Integrate with PAS** is set as appropriate. It should be enabled if PAS is *already* installed on the foundation.
 
 1. Return to the Ops Manager Installation Dashboard and click **Apply Changes**.
+
+1. (Optional) Grafana is deployed on port 3000. A named route to Grafana can be configured in your IaaS or a native IaaS load balancer can be used.
 
 ### <a id='observability-data-store-tile'></a> (Optional) Backing Up Observability Data Store for PCF
 
