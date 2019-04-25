@@ -187,7 +187,13 @@ We recommend CF pushing Telegraf using the binary provided on [PivNet](https://n
 4. CF Push Telegraf to the desired foundation
   a. Place the telegraf binary, the `telegraf.conf` and the three certficates in a folder and navigate to that folder.
   b. Target the foundation to be monitored and run `cf push telegraf -b binary_buildpack -c "./telegraf -config telegraf.conf"`
-5. Add a scrape config job to Observability Data Store for the new telegraf. Example:
+5. (Optional) If you have a large foundation, it is recommended to deploy three separate Telegraf apps; one for each metric type.
+  a. Repeat step 4 for each metric type (counter, gauge, timer)
+     Each time, set the `envelope_types` in `telegraf.conf` to the appropriate metric
+     And the metric type to the app name like `telegraf-<metric-type>`
+6. Add a scrape config job to Observability Data Store for the new telegraf.
+   If multiple Telegrafs were deployed, add a scrape config job for each.
+   Example:
 ```
 - job_name: telegraf
   metrics_path: /metrics
