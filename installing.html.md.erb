@@ -1,35 +1,32 @@
 ---
-title: Installing Observability Data Store for PCF
-owner: Primus
+title: Installing Reliability View for PCF
+owner: Reliability View for PCF
 ---
 
-This topic describes how to install and configure Observability Data Store for Pivotal Cloud Foundry (PCF). For a list of compatible Ops Manager, Pivotal Application Service (PAS)  and Pivotal Container Service (PKS) versions, see [Product Snapshot](index.html#snapshot).
+This topic describes how to install and configure Reliability View for Pivotal Cloud Foundry (PCF). For a list of compatible Ops Manager, Pivotal Application Service (PAS)  and Pivotal Container Service (PKS) versions, see [Product Snapshot](index.html#snapshot).
 
-##<a id='install'></a> Install Observability Data Store for PCF
+##<a id='install'></a> Install Reliability View for PCF
 
 1. Download the product file from [Pivotal Network](https://network.pivotal.io/products/observability_datastore_pcf).
 
 1. Navigate to the Ops Manager Installation Dashboard and click **Import a Product** to upload the product file.
 
-1. Under the **Import a Product** button, click **+** next to the version number of Observability Data Store for PCF.
+1. Under the **Import a Product** button, click **+** next to the version number of Reliability View for PCF.
 This adds the tile to your staging area.
 
-##<a id='configure'></a> Configure Observability Data Store for PCF
+##<a id='configure'></a> Configure Reliability View for PCF
 
-To start using Observability Data Store for PCF, you need to configure the Observability Data Store for PCF tile.
+To start using Reliability View for PCF, you need to configure the tile before installation.
 
-### <a id='observability-data-store-tile'></a> Configure the Observability Data Store for PCF Tile
+### <a id='reliability-view-tile'></a> Configure the Reliability View for PCF Tile
 
-To configure the Observability Data Store for PCF tile, perform the following steps:
+To configure the Reliability View for PCF tile, perform the following steps:
 
-1. Click the **Observability Data Store for PCF** tile on the Ops Manager Installation Dashboard.
+1. Click the **Reliability View for PCF** tile on the Ops Manager Installation Dashboard.
 1. Navigate to **Assign AZs and Networks** and do the following:
     1. Select an Availability Zone (AZ) for placing singleton jobs.
     1. Select one or more AZs for balancing other jobs.
-
-		<p class="note"><strong>Note</strong>: To create a highly available environment, Pivotal recommends selecting multiple AZs.</p>
-
-    1. Select **Network** for installing Observability Data Store for PCF.
+    1. Select **Network** for installing Reliability View for PCF.
     1. Click **Save**.
 
 1. Navigate to **Prometheus Configuration** and do the following:
@@ -37,11 +34,11 @@ To configure the Observability Data Store for PCF tile, perform the following st
 
 1. Return to the Ops Manager Installation Dashboard and click **Apply Changes**.
 
-1. (Optional) Grafana is deployed on port 3000. A named route to Grafana can be configured in your IaaS or a native IaaS load balancer can be used.
+1. (Optional) Grafana is deployed on port 3000. A named route to the Grafana VM can be configured in your IaaS or a native IaaS load balancer can be used.
 
-### <a id='observability-data-store-tile'></a> (Optional) Backing Up Observability Data Store for PCF
+### <a id='reliability-view-tile'></a> (Optional) Backing Up Reliability View for PCF
 
-Observability Data Store for PCF supports (Bosh Backup and Restore)[https://docs.pivotal.io/pivotalcf/2-4/customizing/backup-restore/index.html] functionality.
+Reliability View for PCF supports (Bosh Backup and Restore)[https://docs.pivotal.io/pivotalcf/2-4/customizing/backup-restore/index.html] functionality.
 We recommend running nightly backups via a Concourse pipeline job like the one below:
 
 ```yaml
@@ -86,12 +83,12 @@ resources:
       stop: 00:00
       location: America/Denver
 
-  - name: ods-backup-bucket
+  - name: rv-backup-bucket
     type: gcs-resource
     source:
       bucket: ((gcs-bucket-name))
       json_key: ((service-account-json))
-      regexp: ((gcs-directory))/ods-backup-(.*).tar
+      regexp: ((gcs-directory))/rv-backup-(.*).tar
 
 jobs:
   - name: trigger-backup
@@ -118,7 +115,7 @@ jobs:
             - name: bbr-pipeline-tasks-repo
 
           outputs:
-            - name: ods-backup-artifact
+            - name: rv-backup-artifact
 
           params:
             OPSMAN_URL: ((opsman-url))
@@ -145,25 +142,25 @@ jobs:
                 DEPLOYMENT_NAME=$(jq -r '.[] | select(.type == "p-observability-data-store") | .guid' "deployed_products.json")
                 export DEPLOYMENT_NAME
 
-                pushd ods-backup-artifact
+                pushd rv-backup-artifact
                   ${scripts}/deployment-backup
-                  tar -cvf ods-backup-$(date +%Y.%m.%d.%H.%M.%S).tar -- *
+                  tar -cvf rv-backup-$(date +%Y.%m.%d.%H.%M.%S).tar -- *
                 popd
 
-      - put: ods-backup-bucket
+      - put: rv-backup-bucket
         params:
-          file: ods-backup-artifact/ods-backup-*.tar
+          file: rv-backup-artifact/rv-backup-*.tar
 ```
 
-### <a id='observability-data-store-tile'></a> (Optional) Restoring Observability Data Store for PCF from a BBR Backup
-If you are running nightly backups, you have the ability to restore the Prometheus data using Bosh Backup and Restore. 
-Be aware that this will delete any existing data on all Prometheus VMs and restore them to when the backup was taken.
+### <a id='reliability-view-tile'></a> (Optional) Restoring Reliability View for PCF from a BBR Backup
+If you are running nightly backups, you have the ability to restore the Prometheus and Grafana data using Bosh Backup and Restore.
+Be aware that this will delete any existing data on all Prometheus and Grafana VMs and restore them to when the backup was taken.
 
 To restore, run the following commands:
 
 ```
 mkdir -p $PATH_TO_DEPLOYMENT_BACKUP
-tar xvf ods-backup-*.tar -C $PATH_TO_DEPLOYMENT_BACKUP
+tar xvf rv-backup-*.tar -C $PATH_TO_DEPLOYMENT_BACKUP
 bbr deployment \
   --target $BOSH_TARGET \
   --username $BOSH_CLIENT \
@@ -172,33 +169,4 @@ bbr deployment \
   --ca-cert $PATH_TO_BOSH_SERVER_CERTIFICATE \
   restore \
   --artifact-path $PATH_TO_DEPLOYMENT_BACKUP
-```
-
-##<a id='install'></a> (Optional) Install Telegraf for Firehose Metrics
-
-If Firehose metrics are desired then Telegraf can be installed on each foundation with Pivotal Application Service.
-We recommend CF pushing Telegraf using the binary provided on [PivNet](https://network.pivotal.io/products/observability_datastore_pcf).
-
-1. Download the Telegraf binary and associated `telegraf.conf`
-2. Edit the `telegraf.conf`.  Details for doing so can be found here: [Telegraf Documentation](https://docs.influxdata.com/telegraf/v1.10/administration/configuration/)
-3. Create certificates for connecting to the Reverse Log Proxy endpoint.
-  a. Get the Ops Manager CA Certificate and copy it to a file named `loggregator_ca.crt` using `om certificate-authorities`
-  b. Generate certificates to communicate with Reverse Log Proxy over mTLS using `om generate-certificate --domains reverse-log-proxy.service.cf.internal`
-4. CF Push Telegraf to the desired foundation
-  a. Place the telegraf binary, the `telegraf.conf` and the three certficates in a folder and navigate to that folder.
-  b. Target the foundation to be monitored and run `cf push telegraf -b binary_buildpack -c "./telegraf -config telegraf.conf"`
-5. (Optional) If you have a large foundation, it is recommended to deploy three separate Telegraf apps; one for each metric type.
-  a. Repeat step 4 for each metric type (counter, gauge, timer)
-     Each time, set the `envelope_types` in `telegraf.conf` to the appropriate metric
-     And the metric type to the app name like `telegraf-<metric-type>`
-6. Add a scrape config job to Observability Data Store for the new telegraf.
-   If multiple Telegrafs were deployed, add a scrape config job for each.
-   Example:
-```
-- job_name: telegraf
-  metrics_path: /metrics
-  scheme: https
-  static_configs:
-  - targets:
-    - "telegraf.apps.<domain>"
 ```
